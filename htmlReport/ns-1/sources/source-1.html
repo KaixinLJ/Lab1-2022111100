@@ -1,0 +1,890 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TextGraphAnalyzer</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">&lt;empty package name&gt;</a>
+</div>
+
+<h1>Coverage Summary for Class: TextGraphAnalyzer (&lt;empty package name&gt;)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TextGraphAnalyzer</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (7/14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    46.5%
+  </span>
+  <span class="absValue">
+    (66/142)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    38.6%
+  </span>
+  <span class="absValue">
+    (105/272)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TextGraphAnalyzer$DirectedGraph</td>
+<td class="coverageStat">
+  <span class="percent">
+    85.7%
+  </span>
+  <span class="absValue">
+    (6/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.4%
+  </span>
+  <span class="absValue">
+    (17/18)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    61.9%
+  </span>
+  <span class="absValue">
+    (13/21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    47.2%
+  </span>
+  <span class="absValue">
+    (68/144)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    42.1%
+  </span>
+  <span class="absValue">
+    (122/290)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;import java.io.File;
+&nbsp;import java.io.FileOutputStream;
+&nbsp;import java.io.IOException;
+&nbsp;import java.io.OutputStreamWriter;
+&nbsp;import java.io.PrintWriter;
+&nbsp;import java.io.Writer;
+&nbsp;import java.nio.charset.StandardCharsets;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.Paths;
+&nbsp;import java.nio.file.StandardCopyOption;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Collections;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.HashSet;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.PriorityQueue;
+&nbsp;import java.util.Random;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.regex.Matcher;
+&nbsp;import java.util.regex.Pattern;
+&nbsp;
+&nbsp;/**
+&nbsp; * {@code TextGraphAnalyzer} 是一个文本图分析器.
+&nbsp; * 提供将文本文件转换为有向图的功能，并基于该图实现桥接词查询、文本生成、最短路径计算、PageRank 计算和随机游走等操作。
+&nbsp; *
+&nbsp; * &lt;p&gt;图的节点是文本中的单词，边的权重表示单词之间相邻出现的次数。
+&nbsp; *
+&nbsp; * &lt;p&gt;同时支持将图导出为 DOT 文件，并调用 Graphviz 工具渲染成图片文件。
+&nbsp; *
+&nbsp; * @author dlj
+&nbsp; * @version 1.0
+&nbsp; */
+<b class="nc">&nbsp;public class TextGraphAnalyzer {</b>
+<b class="fc">&nbsp;  private static final Random random = new Random();</b>
+&nbsp;
+&nbsp;  // Create graph from file - now returns a DirectedGraph
+&nbsp;  /**
+&nbsp;   * 从文本文件创建有向图。将文本内容解析为单词，并基于单词的相邻关系构建图.
+&nbsp;   *
+&nbsp;   * @param filePath 文本文件的路径
+&nbsp;   * @return 表示文本中单词关系的有向图
+&nbsp;   * @throws IOException 如果无法读取或处理文件时抛出异常
+&nbsp;   */
+&nbsp;  public static DirectedGraph createGraphFromFile(String filePath) throws IOException {
+&nbsp;
+<b class="nc">&nbsp;    String content = Files.readString(Paths.get(filePath));</b>
+&nbsp;
+&nbsp;    // Replace line breaks and punctuation with spaces
+<b class="nc">&nbsp;    content = content.replaceAll(&quot;[\\r\\n]&quot;, &quot; &quot;);</b>
+<b class="nc">&nbsp;    content = content.replaceAll(&quot;[\\p{Punct}]&quot;, &quot; &quot;);</b>
+&nbsp;
+&nbsp;    // Extract words (only letters A-Z and a-z)
+<b class="nc">&nbsp;    Pattern pattern = Pattern.compile(&quot;[a-zA-Z]+&quot;);</b>
+<b class="nc">&nbsp;    Matcher matcher = pattern.matcher(content);</b>
+&nbsp;
+<b class="nc">&nbsp;    List&lt;String&gt; words = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;    while (matcher.find()) {</b>
+<b class="nc">&nbsp;      words.add(matcher.group());</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    DirectedGraph graph = new DirectedGraph();</b>
+&nbsp;    // Build the graph from adjacent words
+<b class="nc">&nbsp;    for (int i = 0; i &lt; words.size() - 1; i++) {</b>
+<b class="nc">&nbsp;      graph.addEdge(words.get(i), words.get(i + 1));</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    return graph;</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  // Query bridge words - now takes graph as parameter
+&nbsp;  /**
+&nbsp;   * 查询两个单词之间的桥接词.
+&nbsp;   * 桥接词是指在原文中既出现在第一个单词之后，又出现在第二个单词之前的单词。
+&nbsp;   *
+&nbsp;   * @param graph 文本的有向图表示
+&nbsp;   * @param word1 第一个单词
+&nbsp;   * @param word2 第二个单词
+&nbsp;   * @return 描述两个单词之间桥接词的字符串
+&nbsp;   */
+&nbsp;  public static String queryBridgeWords(DirectedGraph graph, String word1, String word2) {
+<b class="fc">&nbsp;    word1 = word1.toLowerCase();</b>
+<b class="fc">&nbsp;    word2 = word2.toLowerCase();</b>
+&nbsp;
+&nbsp;    // Check if both words exist in the graph
+<b class="fc">&nbsp;    if (!graph.containsWord(word1) || !graph.containsWord(word2)) {</b>
+<b class="fc">&nbsp;      return &quot;No &quot; + (!graph.containsWord(word1) ? word1 : &quot;&quot;)</b>
+<b class="fc">&nbsp;        + ((!graph.containsWord(word1) &amp;&amp; !graph.containsWord(word2)) ? &quot; or &quot; : &quot;&quot;)</b>
+<b class="fc">&nbsp;        + (!graph.containsWord(word2) ? word2 : &quot;&quot;) + &quot; in the graph!&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Find bridge words
+<b class="fc">&nbsp;    List&lt;String&gt; bridgeWords = new ArrayList&lt;&gt;();</b>
+&nbsp;
+&nbsp;    // For each neighbor of word1
+<b class="fc">&nbsp;    for (String bridgeCandidate : graph.getNeighbors(word1).keySet()) {</b>
+&nbsp;      // Check if this neighbor connects to word2
+<b class="fc">&nbsp;      if (graph.getNeighbors(bridgeCandidate).containsKey(word2)) {</b>
+<b class="fc">&nbsp;        bridgeWords.add(bridgeCandidate);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Format and return the result
+<b class="fc">&nbsp;    if (bridgeWords.isEmpty()) {</b>
+<b class="fc">&nbsp;      return &quot;No bridge words from &quot; + word1 + &quot; to &quot; + word2 + &quot;!&quot;;</b>
+&nbsp;    } else {
+<b class="fc">&nbsp;      StringBuilder result = new StringBuilder(&quot;The bridge words from &quot;</b>
+&nbsp;          + word1 + &quot; to &quot; + word2 + &quot; are: &quot;);
+<b class="fc">&nbsp;      for (int i = 0; i &lt; bridgeWords.size(); i++) {</b>
+<b class="fc">&nbsp;        if (i &gt; 0) {</b>
+<b class="pc">&nbsp;          result.append(i == bridgeWords.size() - 1 ? &quot; and &quot; : &quot;, &quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        result.append(bridgeWords.get(i));</b>
+&nbsp;      }
+<b class="fc">&nbsp;      result.append(&quot;.&quot;);</b>
+<b class="fc">&nbsp;      return result.toString();</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  // Find bridge words for generation - returns list
+&nbsp;  private static List&lt;String&gt; findBridgeWords(DirectedGraph graph, String word1, String word2) {
+<b class="nc">&nbsp;    word1 = word1.toLowerCase();</b>
+<b class="nc">&nbsp;    word2 = word2.toLowerCase();</b>
+&nbsp;
+<b class="nc">&nbsp;    List&lt;String&gt; bridgeWords = new ArrayList&lt;&gt;();</b>
+&nbsp;
+&nbsp;    // Check if both words exist in the graph
+<b class="nc">&nbsp;    if (!graph.containsWord(word1) || !graph.containsWord(word2)) {</b>
+<b class="nc">&nbsp;      return bridgeWords; // Empty list if either word doesn&#39;t exist</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // For each neighbor of word1
+<b class="nc">&nbsp;    for (String bridgeCandidate : graph.getNeighbors(word1).keySet()) {</b>
+&nbsp;      // Check if this neighbor connects to word2
+<b class="nc">&nbsp;      if (graph.getNeighbors(bridgeCandidate).containsKey(word2)) {</b>
+<b class="nc">&nbsp;        bridgeWords.add(bridgeCandidate);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    return bridgeWords;</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 使用桥接词生成新文本。在输入文本的相邻单词之间插入随机选择的桥接词.
+&nbsp;   *
+&nbsp;   * @param graph 文本的有向图表示
+&nbsp;   * @param inputText 要处理的输入文本
+&nbsp;   * @return 插入了桥接词的新文本
+&nbsp;   */
+&nbsp;  public static String generateNewText(DirectedGraph graph, String inputText) {
+&nbsp;    // Extract words from input text
+<b class="nc">&nbsp;    Pattern pattern = Pattern.compile(&quot;[a-zA-Z]+&quot;);</b>
+<b class="nc">&nbsp;    Matcher matcher = pattern.matcher(inputText);</b>
+<b class="nc">&nbsp;    List&lt;String&gt; words = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;    while (matcher.find()) {</b>
+<b class="nc">&nbsp;      words.add(matcher.group());</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    if (words.size() &lt;= 1) {</b>
+<b class="nc">&nbsp;      return inputText; // Not enough words to insert bridge words</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    StringBuilder result = new StringBuilder();</b>
+<b class="nc">&nbsp;    result.append(words.get(0));</b>
+&nbsp;
+&nbsp;    // For each pair of adjacent words
+<b class="nc">&nbsp;    for (int i = 0; i &lt; words.size() - 1; i++) {</b>
+<b class="nc">&nbsp;      String word1 = words.get(i);</b>
+<b class="nc">&nbsp;      String word2 = words.get(i + 1);</b>
+&nbsp;
+&nbsp;      // Find bridge words
+<b class="nc">&nbsp;      List&lt;String&gt; bridgeWords = findBridgeWords(graph, word1, word2);</b>
+&nbsp;
+&nbsp;      // If bridge words exist, add a random one
+<b class="nc">&nbsp;      if (!bridgeWords.isEmpty()) {</b>
+<b class="nc">&nbsp;        String bridgeWord = bridgeWords.get(random.nextInt(bridgeWords.size()));</b>
+<b class="nc">&nbsp;        result.append(&quot; &quot;).append(bridgeWord);</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // Add the second word
+<b class="nc">&nbsp;      result.append(&quot; &quot;).append(word2);</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    return result.toString();</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 计算两个单词之间的最短路径。使用 Dijkstra 算法查找从一个单词到另一个单词的最短路径.
+&nbsp;   *
+&nbsp;   * @param graph 文本的有向图表示
+&nbsp;   * @param word1 起始单词
+&nbsp;   * @param word2 目标单词
+&nbsp;   * @return 描述最短路径的字符串，包括路径和距离
+&nbsp;   */
+&nbsp;  public static String calcShortestPath(DirectedGraph graph, String word1, String word2) {
+<b class="fc">&nbsp;    word1 = word1.toLowerCase();</b>
+<b class="fc">&nbsp;    word2 = word2.toLowerCase();</b>
+&nbsp;
+&nbsp;    // Check if both words exist in the graph
+<b class="fc">&nbsp;    if (!graph.containsWord(word1) || !graph.containsWord(word2)) {</b>
+<b class="fc">&nbsp;      return &quot;No &quot; + (!graph.containsWord(word1) ? word1 : &quot;&quot;)</b>
+<b class="fc">&nbsp;        + ((!graph.containsWord(word1) &amp;&amp; !graph.containsWord(word2)) ? &quot; or &quot; : &quot;&quot;)</b>
+<b class="fc">&nbsp;        + (!graph.containsWord(word2) ? word2 : &quot;&quot;) + &quot; in the graph!&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // If words are the same
+<b class="fc">&nbsp;    if (word1.equals(word2)) {</b>
+<b class="fc">&nbsp;      return &quot;Path from &quot; + word1 + &quot; to &quot; + word2 + &quot;: &quot; + word1 + &quot;\nLength: 0&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Dijkstra&#39;s algorithm
+<b class="fc">&nbsp;    Map&lt;String, Integer&gt; distance = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;    Map&lt;String, String&gt; previous = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;    PriorityQueue&lt;String&gt; queue = new PriorityQueue&lt;&gt;(</b>
+<b class="fc">&nbsp;        Comparator.comparingInt(distance::get));</b>
+&nbsp;
+&nbsp;    // Initialize
+<b class="fc">&nbsp;    for (String word : graph.getAllWords()) {</b>
+<b class="fc">&nbsp;      distance.put(word, Integer.MAX_VALUE);</b>
+<b class="fc">&nbsp;      previous.put(word, null);</b>
+&nbsp;    }
+<b class="fc">&nbsp;    distance.put(word1, 0);</b>
+<b class="fc">&nbsp;    queue.add(word1);</b>
+&nbsp;
+&nbsp;    // Process queue
+<b class="fc">&nbsp;    while (!queue.isEmpty()) {</b>
+<b class="fc">&nbsp;      String current = queue.poll();</b>
+&nbsp;
+&nbsp;      // If we&#39;ve reached the target word
+<b class="fc">&nbsp;      if (current.equals(word2)) {</b>
+&nbsp;        break;
+&nbsp;      }
+&nbsp;
+<b class="fc">&nbsp;      int currentDistance = distance.get(current);</b>
+&nbsp;
+&nbsp;      // For each neighbor of current word
+<b class="fc">&nbsp;      for (Map.Entry&lt;String, Integer&gt; neighborEntry : graph.getNeighbors(current).entrySet()) {</b>
+<b class="fc">&nbsp;        String neighbor = neighborEntry.getKey();</b>
+<b class="fc">&nbsp;        int weight = neighborEntry.getValue();</b>
+<b class="fc">&nbsp;        int newDistance = currentDistance + weight;</b>
+&nbsp;
+<b class="fc">&nbsp;        if (newDistance &lt; distance.get(neighbor)) {</b>
+&nbsp;          // Remove and re-add to update priority
+<b class="fc">&nbsp;          queue.remove(neighbor);</b>
+&nbsp;
+<b class="fc">&nbsp;          distance.put(neighbor, newDistance);</b>
+<b class="fc">&nbsp;          previous.put(neighbor, current);</b>
+&nbsp;
+<b class="fc">&nbsp;          queue.add(neighbor);</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Check if a path was found
+<b class="fc">&nbsp;    if (distance.get(word2) == Integer.MAX_VALUE) {</b>
+<b class="fc">&nbsp;      return &quot;No path exists from &quot; + word1 + &quot; to &quot; + word2 + &quot;!&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Reconstruct the path
+<b class="fc">&nbsp;    List&lt;String&gt; path = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;    String current = word2;</b>
+<b class="fc">&nbsp;    while (current != null) {</b>
+<b class="fc">&nbsp;      path.add(current);</b>
+<b class="fc">&nbsp;      current = previous.get(current);</b>
+&nbsp;    }
+<b class="fc">&nbsp;    Collections.reverse(path);</b>
+&nbsp;
+&nbsp;    // Format the result
+<b class="fc">&nbsp;    String pathStr = String.join(&quot; → &quot;, path);</b>
+<b class="fc">&nbsp;    return &quot;Path from &quot; + word1 + &quot; to &quot; + word2 + &quot;: &quot;</b>
+<b class="fc">&nbsp;      + pathStr + &quot;\nLength: &quot; + distance.get(word2);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 计算指定单词的 PageRank 值.
+&nbsp;   * PageRank 是一种算法，用于评估网页或节点在网络中的重要性.
+&nbsp;   *
+&nbsp;   * @param graph 文本的有向图表示
+&nbsp;   * @param word  要计算 PageRank 的单词
+&nbsp;   * @return 指定单词的 PageRank 值
+&nbsp;   */
+&nbsp;  public static Double calcPageRank(DirectedGraph graph, String word) {
+<b class="nc">&nbsp;    word = word.toLowerCase();</b>
+<b class="nc">&nbsp;    if (!graph.containsWord(word)) {</b>
+<b class="nc">&nbsp;      return -1.0;</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    final int iterations = 500;</b>
+<b class="nc">&nbsp;    final double damping = 0.85;</b>
+&nbsp;
+<b class="nc">&nbsp;    int n = graph.size();</b>
+<b class="nc">&nbsp;    Map&lt;String, Double&gt; rank = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;    Map&lt;String, Double&gt; newRank = new HashMap&lt;&gt;();</b>
+&nbsp;
+&nbsp;    // 缓存单词列表，避免多次 getAllWords()
+<b class="nc">&nbsp;    Set&lt;String&gt; allWords = graph.getAllWords();</b>
+&nbsp;
+&nbsp;    // 初始化 rank 值
+<b class="nc">&nbsp;    double initialRank = 1.0 / n;</b>
+<b class="nc">&nbsp;    for (String w : allWords) {</b>
+<b class="nc">&nbsp;      rank.put(w, initialRank);</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    for (int i = 0; i &lt; iterations; i++) {</b>
+&nbsp;      // 重置 newRank
+<b class="nc">&nbsp;      for (String w : allWords) {</b>
+<b class="nc">&nbsp;        newRank.put(w, (1 - damping) / n);</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // 计算悬挂节点贡献值
+<b class="nc">&nbsp;      double danglingWeight = 0;</b>
+<b class="nc">&nbsp;      for (String w : allWords) {</b>
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; outLinks = graph.getNeighbors(w);</b>
+<b class="nc">&nbsp;        int totalWeight = outLinks.values().stream().mapToInt(Integer::intValue).sum();</b>
+<b class="nc">&nbsp;        if (outLinks.isEmpty() || totalWeight == 0) {</b>
+<b class="nc">&nbsp;          danglingWeight += damping * rank.get(w) / n;</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+&nbsp;      // 给所有节点加上 danglingWeight
+<b class="nc">&nbsp;      for (String w : allWords) {</b>
+<b class="nc">&nbsp;        newRank.put(w, newRank.get(w) + danglingWeight);</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // 分配 PageRank 给邻居
+<b class="nc">&nbsp;      for (String w : allWords) {</b>
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; outLinks = graph.getNeighbors(w);</b>
+<b class="nc">&nbsp;        int totalWeight = outLinks.values().stream().mapToInt(Integer::intValue).sum();</b>
+<b class="nc">&nbsp;        if (totalWeight &gt; 0) {</b>
+<b class="nc">&nbsp;          for (Map.Entry&lt;String, Integer&gt; outLink : outLinks.entrySet()) {</b>
+<b class="nc">&nbsp;            String neighbor = outLink.getKey();</b>
+<b class="nc">&nbsp;            int weight = outLink.getValue();</b>
+<b class="nc">&nbsp;            double addition = damping * rank.get(w) * (weight / (double) totalWeight);</b>
+<b class="nc">&nbsp;            newRank.put(neighbor, newRank.get(neighbor) + addition);</b>
+&nbsp;          }
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+&nbsp;      // 更新 rank
+<b class="nc">&nbsp;      Map&lt;String, Double&gt; temp = rank;</b>
+<b class="nc">&nbsp;      rank = newRank;</b>
+<b class="nc">&nbsp;      newRank = temp;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // 归一化 rank 值
+<b class="nc">&nbsp;    double sum = rank.values().stream().mapToDouble(Double::doubleValue).sum();</b>
+<b class="nc">&nbsp;    if (Math.abs(sum - 1.0) &gt; 0.001) {</b>
+<b class="nc">&nbsp;      for (Map.Entry&lt;String, Double&gt; entry : rank.entrySet()) {</b>
+<b class="nc">&nbsp;        entry.setValue(entry.getValue() / sum);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    return rank.get(word);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 在有向图上执行随机游走。从随机节点开始，随机选择下一个节点，直到遇到已访问的边或无法继续.
+&nbsp;   *
+&nbsp;   * @param graph 文本的有向图表示
+&nbsp;   * @return 描述随机游走路径的字符串
+&nbsp;   */
+&nbsp;  public static String randomWalk(DirectedGraph graph) {
+<b class="nc">&nbsp;    if (graph.size() == 0) {</b>
+<b class="nc">&nbsp;      return &quot;Graph is empty.&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Select a random starting node
+<b class="nc">&nbsp;    List&lt;String&gt; allWords = new ArrayList&lt;&gt;(graph.getAllWords());</b>
+<b class="nc">&nbsp;    String currentWord = allWords.get(random.nextInt(allWords.size()));</b>
+&nbsp;
+<b class="nc">&nbsp;    List&lt;String&gt; path = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;    Set&lt;String&gt; visitedEdges = new HashSet&lt;&gt;();</b>
+<b class="nc">&nbsp;    path.add(currentWord);</b>
+&nbsp;
+&nbsp;    while (true) {
+&nbsp;      // Get neighbors
+<b class="nc">&nbsp;      Map&lt;String, Integer&gt; neighbors = graph.getNeighbors(currentWord);</b>
+&nbsp;
+&nbsp;      // Exit if no outgoing edges
+<b class="nc">&nbsp;      if (neighbors.isEmpty()) {</b>
+&nbsp;        break;
+&nbsp;      }
+&nbsp;
+&nbsp;      // Choose a random neighbor
+<b class="nc">&nbsp;      List&lt;String&gt; neighborList = new ArrayList&lt;&gt;(neighbors.keySet());</b>
+<b class="nc">&nbsp;      String nextWord = neighborList.get(random.nextInt(neighborList.size()));</b>
+&nbsp;
+&nbsp;      // Create edge key
+<b class="nc">&nbsp;      String edge = currentWord + &quot;-&gt;&quot; + nextWord;</b>
+&nbsp;
+&nbsp;      // Exit if edge already visited
+<b class="nc">&nbsp;      if (visitedEdges.contains(edge)) {</b>
+<b class="nc">&nbsp;        path.add(nextWord + &quot; (repeated edge)&quot;);</b>
+&nbsp;        break;
+&nbsp;      }
+&nbsp;
+<b class="nc">&nbsp;      visitedEdges.add(edge);</b>
+<b class="nc">&nbsp;      path.add(nextWord);</b>
+<b class="nc">&nbsp;      currentWord = nextWord;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Format the path
+<b class="nc">&nbsp;    return String.join(&quot; -&gt; &quot;, path);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * Save the directed graph to disk as a DOT file for Graphviz.
+&nbsp;   *
+&nbsp;   * @param graph          The directed graph to save
+&nbsp;   * @param outputFilePath The path to save the output file
+&nbsp;   * @param format         The output format (dot, png, svg, pdf)
+&nbsp;   * @return Whether the operation was successful
+&nbsp;   */
+&nbsp;  public static boolean saveGraphToFile(DirectedGraph graph, String outputFilePath, String format) {
+&nbsp;    try {
+&nbsp;      // Ensure the output directory exists
+<b class="fc">&nbsp;      File outputFile = new File(outputFilePath);</b>
+<b class="pc">&nbsp;      if (outputFile.getParentFile() != null) {</b>
+<b class="nc">&nbsp;        boolean dirsCreated = outputFile.getParentFile().mkdirs();</b>
+<b class="nc">&nbsp;        if (!dirsCreated &amp;&amp; !outputFile.getParentFile().exists()) {</b>
+<b class="nc">&nbsp;          System.err.println(&quot;Failed to create directories for: &quot; + outputFile.getParent());</b>
+<b class="nc">&nbsp;          return false;</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+&nbsp;
+&nbsp;      // Handle different formats
+<b class="fc">&nbsp;      format = format.toLowerCase();</b>
+&nbsp;      String dotFilePath;
+&nbsp;
+<b class="pc">&nbsp;      if (format.equals(&quot;dot&quot;)) {</b>
+<b class="nc">&nbsp;        dotFilePath = outputFilePath;</b>
+&nbsp;      } else {
+&nbsp;        // Generate temporary DOT file
+<b class="fc">&nbsp;        dotFilePath = outputFilePath.replaceAll(&quot;\\.[^.]+$&quot;, &quot;.dot&quot;);</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // Generate DOT file content
+<b class="fc">&nbsp;      generateDotFile(graph, dotFilePath);</b>
+&nbsp;
+&nbsp;      // If requested format is not DOT, convert using Graphviz
+<b class="pc">&nbsp;      if (!format.equals(&quot;dot&quot;)) {</b>
+<b class="fc">&nbsp;        renderWithGraphviz(dotFilePath, outputFilePath, format);</b>
+&nbsp;      }
+&nbsp;
+<b class="fc">&nbsp;      return true;</b>
+&nbsp;    } catch (Exception e) {
+<b class="nc">&nbsp;      System.err.println(&quot;Error saving graph: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;      e.printStackTrace();</b>
+<b class="nc">&nbsp;      return false;</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  /** Generate a DOT file from the graph.
+&nbsp;   */
+&nbsp;  private static void generateDotFile(DirectedGraph graph, String filePath) throws IOException {
+<b class="fc">&nbsp;    try (Writer writer =</b>
+&nbsp;        new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8)) {
+<b class="fc">&nbsp;      writer.write(&quot;digraph TextGraph {\n&quot;);</b>
+&nbsp;
+&nbsp;      // Graph attributes
+<b class="fc">&nbsp;      writer.write(&quot;  graph [fontname=\&quot;Arial\&quot;, rankdir=LR];\n&quot;);</b>
+<b class="fc">&nbsp;      writer.write(&quot;  node [fontname=\&quot;Arial\&quot;, shape=ellipse];\n&quot;);</b>
+<b class="fc">&nbsp;      writer.write(&quot;  edge [fontname=\&quot;Arial\&quot;];\n\n&quot;);</b>
+&nbsp;
+&nbsp;      // Write nodes
+<b class="fc">&nbsp;      for (String word : graph.getAllWords()) {</b>
+<b class="fc">&nbsp;        String sanitizedWord = word.replace(&quot;\&quot;&quot;, &quot;\\\&quot;&quot;);</b>
+<b class="fc">&nbsp;        writer.write(&quot;  \&quot;&quot; + sanitizedWord + &quot;\&quot;;\n&quot;);</b>
+&nbsp;      }
+&nbsp;
+<b class="fc">&nbsp;      writer.write(&quot;\n&quot;);</b>
+&nbsp;
+&nbsp;      // Write edges
+<b class="fc">&nbsp;      for (String from : graph.getAllWords()) {</b>
+<b class="fc">&nbsp;        String sanitizedFrom = from.replace(&quot;\&quot;&quot;, &quot;\\\&quot;&quot;);</b>
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Integer&gt; neighbors = graph.getNeighbors(from);</b>
+<b class="fc">&nbsp;        for (Map.Entry&lt;String, Integer&gt; entry : neighbors.entrySet()) {</b>
+<b class="fc">&nbsp;          String to = entry.getKey();</b>
+<b class="fc">&nbsp;          int weight = entry.getValue();</b>
+<b class="fc">&nbsp;          String sanitizedTo = to.replace(&quot;\&quot;&quot;, &quot;\\\&quot;&quot;);</b>
+&nbsp;
+&nbsp;          // Calculate edge thickness based on weight
+<b class="fc">&nbsp;          double penwidth = 1.0;</b>
+<b class="fc">&nbsp;          if (weight &gt; 1) {</b>
+<b class="fc">&nbsp;            penwidth = 1.0 + Math.log10(weight);</b>
+&nbsp;          }
+&nbsp;
+<b class="fc">&nbsp;          writer.write(&quot;  \&quot;&quot; + sanitizedFrom + &quot;\&quot; -&gt; \&quot;&quot; + sanitizedTo</b>
+&nbsp;              + &quot;\&quot; [label=\&quot;&quot; + weight + &quot;\&quot;, weight=&quot; + weight
+<b class="fc">&nbsp;              + &quot;, penwidth=&quot; + String.format(&quot;%.2f&quot;, penwidth) + &quot;];\n&quot;);</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+<b class="fc">&nbsp;      writer.write(&quot;}\n&quot;);</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  /** Render a DOT file using Graphviz.
+&nbsp;   */
+&nbsp;  private static void renderWithGraphviz(String dotFilePath, String outputFilePath, String format)
+&nbsp;      throws IOException, InterruptedException {
+&nbsp;    // Check if Graphviz is installed
+<b class="pc">&nbsp;    if (!isGraphvizInstalled()) {</b>
+<b class="nc">&nbsp;      throw new IOException(&quot;Graphviz is not installed.&quot;</b>
+&nbsp;        + &quot; Please install Graphviz or use DOT format.&quot;);
+&nbsp;    }
+&nbsp;
+&nbsp;    // Build the Graphviz command
+<b class="fc">&nbsp;    ProcessBuilder processBuilder = new ProcessBuilder(</b>
+&nbsp;        &quot;dot&quot;, &quot;-T&quot; + format, &quot;-o&quot;, outputFilePath, dotFilePath
+&nbsp;    );
+&nbsp;
+<b class="fc">&nbsp;    processBuilder.redirectErrorStream(true);</b>
+<b class="fc">&nbsp;    Process process = processBuilder.start();</b>
+&nbsp;
+&nbsp;    // Wait for the process to complete
+<b class="fc">&nbsp;    int exitCode = process.waitFor();</b>
+<b class="pc">&nbsp;    if (exitCode != 0) {</b>
+<b class="nc">&nbsp;      throw new IOException(&quot;Graphviz rendering failed with exit code &quot; + exitCode);</b>
+&nbsp;    }
+&nbsp;
+<b class="pc">&nbsp;    if (!dotFilePath.equals(outputFilePath)) {</b>
+<b class="fc">&nbsp;      File dotFile = new File(dotFilePath);</b>
+<b class="fc">&nbsp;      boolean deleted = dotFile.delete();</b>
+<b class="pc">&nbsp;      if (!deleted &amp;&amp; dotFile.exists()) {</b>
+<b class="nc">&nbsp;        System.err.println(&quot;Warning: Failed to delete temporary file: &quot; + dotFilePath);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  /** Check if Graphviz is installed.
+&nbsp;   */
+&nbsp;  public static boolean isGraphvizInstalled() {
+&nbsp;    try {
+<b class="fc">&nbsp;      Process process = Runtime.getRuntime().exec(&quot;dot -V&quot;);</b>
+<b class="fc">&nbsp;      int exitCode = process.waitFor();</b>
+<b class="fc">&nbsp;      return exitCode == 0;</b>
+&nbsp;    } catch (Exception e) {
+<b class="nc">&nbsp;      return false;</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * Save the graph to a file with enhanced visual settings for better clarity.
+&nbsp;   *
+&nbsp;   * @param graph    The directed graph to save
+&nbsp;   * @param filePath The path to save the file to
+&nbsp;   * @param format   The format to save as (svg, png, pdf, or dot)
+&nbsp;   * @return true if the operation was successful, false otherwise
+&nbsp;   */
+&nbsp;  public static boolean saveEnhancedGraphToFile(
+&nbsp;      DirectedGraph graph, String filePath, String format) {
+&nbsp;    try {
+&nbsp;      // Create a temporary DOT file
+<b class="nc">&nbsp;      File dotFile = File.createTempFile(&quot;graph_&quot;, &quot;.dot&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;      try (PrintWriter writer = new PrintWriter(</b>
+&nbsp;          new OutputStreamWriter(new FileOutputStream(dotFile), StandardCharsets.UTF_8))) {
+&nbsp;        // DOT file header with enhanced graph settings for better clarity
+<b class="nc">&nbsp;        writer.println(&quot;digraph G {&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;  // Enhanced graph settings&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;  graph [&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    bgcolor=\&quot;white\&quot;,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    rankdir=LR,&quot;);  // Left to right layout</b>
+<b class="nc">&nbsp;        writer.println(&quot;    splines=true,&quot;);  // Use curved edges</b>
+<b class="nc">&nbsp;        writer.println(&quot;    overlap=false,&quot;);  // Prevent node overlap</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontname=\&quot;Arial\&quot;,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontsize=14,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    dpi=300,&quot;);      // Higher resolution</b>
+<b class="nc">&nbsp;        writer.println(&quot;    nodesep=0.5,&quot;);  // Increased spacing between nodes</b>
+<b class="nc">&nbsp;        writer.println(&quot;    ranksep=0.75&quot;);  // Increased spacing between ranks</b>
+<b class="nc">&nbsp;        writer.println(&quot;  ];&quot;);</b>
+&nbsp;
+&nbsp;        // Enhanced node settings
+<b class="nc">&nbsp;        writer.println(&quot;  node [&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    shape=ellipse,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    style=\&quot;filled,rounded\&quot;,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fillcolor=\&quot;#E8F5E9\&quot;,&quot;);  // Light green background</b>
+<b class="nc">&nbsp;        writer.println(&quot;    color=\&quot;#2E7D32\&quot;,&quot;);      // Dark green border</b>
+<b class="nc">&nbsp;        writer.println(&quot;    penwidth=1.5,&quot;);          // Thicker border</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontname=\&quot;Arial\&quot;,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontsize=14,&quot;);           // Larger font</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontcolor=\&quot;#1B5E20\&quot;,&quot;);  // Dark green text</b>
+<b class="nc">&nbsp;        writer.println(&quot;    margin=0.3,&quot;);            // Padding around the text</b>
+<b class="nc">&nbsp;        writer.println(&quot;    height=0.6&quot;);             // Slightly larger nodes</b>
+<b class="nc">&nbsp;        writer.println(&quot;  ];&quot;);</b>
+&nbsp;
+&nbsp;        // Enhanced edge settings
+<b class="nc">&nbsp;        writer.println(&quot;  edge [&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    penwidth=1.2,&quot;);         // Thicker edges</b>
+<b class="nc">&nbsp;        writer.println(&quot;    arrowsize=0.8,&quot;);        // Larger arrows</b>
+<b class="nc">&nbsp;        writer.println(&quot;    color=\&quot;#4CAF50\&quot;,&quot;);     // Green edges</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontname=\&quot;Arial\&quot;,&quot;);</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontsize=12,&quot;);          // Readable font size</b>
+<b class="nc">&nbsp;        writer.println(&quot;    fontcolor=\&quot;#455A64\&quot;&quot;);  // Dark bluish gray for edge labels</b>
+<b class="nc">&nbsp;        writer.println(&quot;  ];&quot;);</b>
+&nbsp;
+&nbsp;        // Add nodes
+<b class="nc">&nbsp;        for (String word : graph.getAllWords()) {</b>
+<b class="nc">&nbsp;          writer.println(&quot;  \&quot;&quot; + word + &quot;\&quot; [label=\&quot;&quot; + word + &quot;\&quot;];&quot;);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Add edges with weights
+<b class="nc">&nbsp;        for (String source : graph.getAllWords()) {</b>
+<b class="nc">&nbsp;          Map&lt;String, Integer&gt; neighbors = graph.getNeighbors(source);</b>
+&nbsp;
+<b class="nc">&nbsp;          for (Map.Entry&lt;String, Integer&gt; edge : neighbors.entrySet()) {</b>
+<b class="nc">&nbsp;            String target = edge.getKey();</b>
+<b class="nc">&nbsp;            int weight = edge.getValue();</b>
+&nbsp;
+&nbsp;            // Add edge with weight as label
+<b class="nc">&nbsp;            writer.println(&quot;  \&quot;&quot; + source + &quot;\&quot; -&gt; \&quot;&quot;</b>
+&nbsp;                + target + &quot;\&quot; [label=\&quot; &quot; + weight + &quot; \&quot;];&quot;);
+&nbsp;          }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        writer.println(&quot;}&quot;);</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // Check if the file is to be saved as DOT format
+<b class="nc">&nbsp;      if (format.equalsIgnoreCase(&quot;dot&quot;)) {</b>
+&nbsp;        // Just copy the DOT file
+<b class="nc">&nbsp;        Files.copy(</b>
+<b class="nc">&nbsp;            dotFile.toPath(),</b>
+<b class="nc">&nbsp;          new File(filePath).toPath(),</b>
+&nbsp;            StandardCopyOption.REPLACE_EXISTING
+&nbsp;        );
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // For other formats, use Graphviz to convert the DOT file
+<b class="nc">&nbsp;      if (!isGraphvizInstalled()) {</b>
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // Build the Graphviz command
+<b class="nc">&nbsp;      String command = &quot;dot -T&quot; + format.toLowerCase() + &quot; \&quot;&quot; + dotFile.getAbsolutePath()</b>
+&nbsp;          + &quot;\&quot; -o \&quot;&quot; + filePath + &quot;\&quot;&quot;;
+&nbsp;
+&nbsp;      // Execute the command
+<b class="nc">&nbsp;      Process process = Runtime.getRuntime().exec(command);</b>
+<b class="nc">&nbsp;      int exitCode = process.waitFor();</b>
+&nbsp;
+&nbsp;      // Check if the conversion was successful
+<b class="nc">&nbsp;      return exitCode == 0;</b>
+&nbsp;    } catch (IOException | InterruptedException e) {
+<b class="nc">&nbsp;      e.printStackTrace();</b>
+<b class="nc">&nbsp;      return false;</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;  /**
+&nbsp;   * {@code DirectedGraph} 是一个有向图的实现.
+&nbsp;   * 提供添加单词、添加边、检查单词存在性、获取邻居等功能.
+&nbsp;   */
+&nbsp;
+<b class="fc">&nbsp;  public static class DirectedGraph {</b>
+<b class="fc">&nbsp;    Map&lt;String, Map&lt;String, Integer&gt;&gt; adjacencyList = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;    Set&lt;String&gt; allWords = new HashSet&lt;&gt;();</b>
+&nbsp;
+&nbsp;    /**
+&nbsp;     * 添加一个单词到图中. 如果单词已经存在，则不做任何操作.
+&nbsp;     *
+&nbsp;     * @param word 要添加的单词
+&nbsp;     */
+&nbsp;    public void addWord(String word) {
+<b class="fc">&nbsp;      word = word.toLowerCase();</b>
+<b class="fc">&nbsp;      allWords.add(word);</b>
+<b class="fc">&nbsp;      if (!adjacencyList.containsKey(word)) {</b>
+<b class="fc">&nbsp;        adjacencyList.put(word, new HashMap&lt;&gt;());</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Add an edge between two words. If the words do not exist, they will be added.
+&nbsp;     * The edge weight is incremented by 1.
+&nbsp;     *
+&nbsp;     * @param from The starting word
+&nbsp;     * @param to   The ending word
+&nbsp;
+&nbsp;     */
+&nbsp;    public void addEdge(String from, String to) {
+<b class="fc">&nbsp;      from = from.toLowerCase();</b>
+<b class="fc">&nbsp;      to = to.toLowerCase();</b>
+&nbsp;
+<b class="fc">&nbsp;      addWord(from);</b>
+<b class="fc">&nbsp;      addWord(to);</b>
+&nbsp;
+<b class="fc">&nbsp;      Map&lt;String, Integer&gt; edges = adjacencyList.get(from);</b>
+<b class="fc">&nbsp;      edges.put(to, edges.getOrDefault(to, 0) + 1);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Check if a word exists in the graph.
+&nbsp;     *
+&nbsp;     * @param word The word to check
+&nbsp;     * @return true if the word exists, false otherwise
+&nbsp;     */
+&nbsp;    public boolean containsWord(String word) {
+<b class="fc">&nbsp;      return allWords.contains(word.toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Get the neighbors of a word and their weights.
+&nbsp;     *
+&nbsp;     * @param word The word to get neighbors for
+&nbsp;     * @return A map of neighboring words and their weights
+&nbsp;     */
+&nbsp;    public Map&lt;String, Integer&gt; getNeighbors(String word) {
+<b class="fc">&nbsp;      word = word.toLowerCase();</b>
+<b class="fc">&nbsp;      return adjacencyList.getOrDefault(word, new HashMap&lt;&gt;());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Get all words in the graph
+&nbsp;    public Set&lt;String&gt; getAllWords() {
+<b class="fc">&nbsp;      return Collections.unmodifiableSet(allWords);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Get the size of the graph (number of unique words).
+&nbsp;     *
+&nbsp;     * @return The number of unique words in the graph
+&nbsp;     */
+&nbsp;    public int size() {
+<b class="nc">&nbsp;      return allWords.size();</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-05-27 13:31</div>
+</div>
+</body>
+</html>

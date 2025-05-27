@@ -1,0 +1,936 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TextGraphAnalyzerGui</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">&lt;empty package name&gt;</a>
+</div>
+
+<h1>Coverage Summary for Class: TextGraphAnalyzerGui (&lt;empty package name&gt;)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TextGraphAnalyzerGui</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/106)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/351)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;import java.awt.BorderLayout;
+&nbsp;import java.awt.Dimension;
+&nbsp;import java.awt.FlowLayout;
+&nbsp;import java.awt.Font;
+&nbsp;import java.awt.GridLayout;
+&nbsp;import java.awt.event.InputEvent;
+&nbsp;import java.awt.event.KeyEvent;
+&nbsp;import java.awt.geom.AffineTransform;
+&nbsp;import java.io.File;
+&nbsp;import java.io.IOException;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.StandardCopyOption;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Collections;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;import javax.swing.BorderFactory;
+&nbsp;import javax.swing.Box;
+&nbsp;import javax.swing.BoxLayout;
+&nbsp;import javax.swing.JButton;
+&nbsp;import javax.swing.JFileChooser;
+&nbsp;import javax.swing.JFrame;
+&nbsp;import javax.swing.JLabel;
+&nbsp;import javax.swing.JMenu;
+&nbsp;import javax.swing.JMenuBar;
+&nbsp;import javax.swing.JMenuItem;
+&nbsp;import javax.swing.JOptionPane;
+&nbsp;import javax.swing.JPanel;
+&nbsp;import javax.swing.JScrollPane;
+&nbsp;import javax.swing.JTabbedPane;
+&nbsp;import javax.swing.JTextArea;
+&nbsp;import javax.swing.JTextField;
+&nbsp;import javax.swing.KeyStroke;
+&nbsp;import javax.swing.SwingUtilities;
+&nbsp;import javax.swing.UIManager;
+&nbsp;import javax.swing.border.EmptyBorder;
+&nbsp;import javax.swing.filechooser.FileNameExtensionFilter;
+&nbsp;import org.apache.batik.swing.JSVGCanvas;
+&nbsp;
+&nbsp;/**
+&nbsp; * 文本图分析器的图形界面. 提供加载文本、分析单词关系、可视化图结构等功能。
+&nbsp; */
+&nbsp;public class TextGraphAnalyzerGui extends JFrame {
+&nbsp;
+&nbsp;  private TextGraphAnalyzer.DirectedGraph graph;
+&nbsp;  private JTextArea outputArea;
+&nbsp;  private JTextField word1Field;
+&nbsp;  private JTextField word2Field;
+&nbsp;  private JTextField inputTextField;
+&nbsp;  private JTextField pathSourceField;
+&nbsp;  private JTextField pathTargetField;
+&nbsp;  private JPanel graphPanel;
+&nbsp;  private JFileChooser fileChooser;
+&nbsp;  private String currentFilePath;
+&nbsp;  private JButton saveGraphButton;
+&nbsp;  private File currentSvgFile;
+&nbsp;  private JSVGCanvas svgCanvas; // We&#39;ll use Batik&#39;s JSVGCanvas to display SVG
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 构造方法，初始化界面和各组件.
+&nbsp;   */
+&nbsp;
+&nbsp;  public TextGraphAnalyzerGui() {
+<b class="nc">&nbsp;    super(&quot;Text Graph Analyzer&quot;);</b>
+<b class="nc">&nbsp;    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);</b>
+<b class="nc">&nbsp;    setSize(1000, 700);</b>
+<b class="nc">&nbsp;    setLocationRelativeTo(null);</b>
+&nbsp;
+&nbsp;    // Initialize components
+<b class="nc">&nbsp;    graph = null;</b>
+<b class="nc">&nbsp;    fileChooser = new JFileChooser();</b>
+<b class="nc">&nbsp;    fileChooser.setFileFilter(new FileNameExtensionFilter(&quot;Text files&quot;, &quot;txt&quot;));</b>
+&nbsp;
+&nbsp;    // Initialize the SVG Canvas
+&nbsp;    try {
+&nbsp;      // Use reflection to check if Batik is available
+<b class="nc">&nbsp;      Class.forName(&quot;org.apache.batik.swing.JSVGCanvas&quot;);</b>
+<b class="nc">&nbsp;      svgCanvas = new org.apache.batik.swing.JSVGCanvas();</b>
+&nbsp;    } catch (ClassNotFoundException e) {
+&nbsp;      // If Batik is not available, we&#39;ll handle this in the createOutputPanel method
+<b class="nc">&nbsp;      svgCanvas = null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Create main panels
+<b class="nc">&nbsp;    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));</b>
+<b class="nc">&nbsp;    mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));</b>
+&nbsp;
+&nbsp;    // Left panel for controls
+<b class="nc">&nbsp;    JPanel controlPanel = createControlPanel();</b>
+&nbsp;
+&nbsp;    // Right panel for output
+<b class="nc">&nbsp;    JPanel outputPanel = createOutputPanel();</b>
+&nbsp;
+&nbsp;    // Add panels to main window
+<b class="nc">&nbsp;    mainPanel.add(controlPanel, BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    mainPanel.add(outputPanel, BorderLayout.CENTER);</b>
+&nbsp;
+&nbsp;    // Add menu bar
+<b class="nc">&nbsp;    setJMenuBar(createMenuBar());</b>
+&nbsp;
+&nbsp;    // Add main panel to frame
+<b class="nc">&nbsp;    add(mainPanel);</b>
+&nbsp;
+&nbsp;    // Display the window
+<b class="nc">&nbsp;    setVisible(true);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  /**
+&nbsp;   * 应用程序入口，设置外观并启动GUI.
+&nbsp;   *
+&nbsp;   * @param args 命令行参数
+&nbsp;   */
+&nbsp;
+&nbsp;  public static void main(String[] args) {
+&nbsp;    try {
+&nbsp;      // Set Look and Feel to system default
+<b class="nc">&nbsp;      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());</b>
+&nbsp;    } catch (Exception e) {
+<b class="nc">&nbsp;      e.printStackTrace();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Create and display the GUI
+<b class="nc">&nbsp;    SwingUtilities.invokeLater(() -&gt; new TextGraphAnalyzerGui());</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private JMenuBar createMenuBar() {
+&nbsp;
+&nbsp;    // File menu
+<b class="nc">&nbsp;    JMenu fileMenu = new JMenu(&quot;File&quot;);</b>
+<b class="nc">&nbsp;    fileMenu.setMnemonic(KeyEvent.VK_F);</b>
+&nbsp;
+<b class="nc">&nbsp;    JMenuItem openItem = new JMenuItem(&quot;Open Text File&quot;, KeyEvent.VK_O);</b>
+<b class="nc">&nbsp;    openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));</b>
+<b class="nc">&nbsp;    openItem.addActionListener(e -&gt; openTextFile());</b>
+&nbsp;
+<b class="nc">&nbsp;    JMenuItem saveGraphItem = new JMenuItem(&quot;Save Graph&quot;, KeyEvent.VK_S);</b>
+<b class="nc">&nbsp;    saveGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));</b>
+<b class="nc">&nbsp;    saveGraphItem.addActionListener(e -&gt; saveGraph());</b>
+&nbsp;
+<b class="nc">&nbsp;    JMenuItem exitItem = new JMenuItem(&quot;Exit&quot;, KeyEvent.VK_X);</b>
+<b class="nc">&nbsp;    exitItem.addActionListener(e -&gt; System.exit(0));</b>
+&nbsp;
+<b class="nc">&nbsp;    fileMenu.add(openItem);</b>
+<b class="nc">&nbsp;    fileMenu.add(saveGraphItem);</b>
+<b class="nc">&nbsp;    fileMenu.addSeparator();</b>
+<b class="nc">&nbsp;    fileMenu.add(exitItem);</b>
+&nbsp;
+&nbsp;    // Help menu
+<b class="nc">&nbsp;    JMenu helpMenu = new JMenu(&quot;Help&quot;);</b>
+<b class="nc">&nbsp;    helpMenu.setMnemonic(KeyEvent.VK_H);</b>
+&nbsp;
+<b class="nc">&nbsp;    JMenuItem aboutItem = new JMenuItem(&quot;About&quot;, KeyEvent.VK_A);</b>
+<b class="nc">&nbsp;    aboutItem.addActionListener(e -&gt; JOptionPane.showMessageDialog(this,</b>
+&nbsp;        &quot;Text Graph Analyzer\n&quot;
+&nbsp;            + &quot;A tool for analyzing word relationships in text documents.\n&quot;
+&nbsp;            + &quot;Version 1.0&quot;,
+&nbsp;        &quot;About Text Graph Analyzer&quot;,
+&nbsp;        JOptionPane.INFORMATION_MESSAGE));
+&nbsp;
+<b class="nc">&nbsp;    helpMenu.add(aboutItem);</b>
+<b class="nc">&nbsp;    JMenuBar menuBar = new JMenuBar();</b>
+<b class="nc">&nbsp;    menuBar.add(fileMenu);</b>
+<b class="nc">&nbsp;    menuBar.add(helpMenu);</b>
+&nbsp;
+<b class="nc">&nbsp;    return menuBar;</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private JPanel createControlPanel() {
+<b class="nc">&nbsp;    JPanel controlPanel = new JPanel();</b>
+<b class="nc">&nbsp;    controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));</b>
+<b class="nc">&nbsp;    controlPanel.setBorder(new EmptyBorder(0, 0, 0, 10));</b>
+<b class="nc">&nbsp;    controlPanel.setPreferredSize(new Dimension(250, 600));</b>
+&nbsp;
+&nbsp;    // File selection panel
+<b class="nc">&nbsp;    JPanel filePanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    filePanel.setBorder(BorderFactory.createTitledBorder(&quot;Text File&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton browseButton = new JButton(&quot;Browse...&quot;);</b>
+<b class="nc">&nbsp;    browseButton.addActionListener(e -&gt; openTextFile());</b>
+&nbsp;
+<b class="nc">&nbsp;    filePanel.add(browseButton, BorderLayout.CENTER);</b>
+&nbsp;
+&nbsp;    // Analysis options panel
+<b class="nc">&nbsp;    JPanel optionsPanel = new JPanel();</b>
+<b class="nc">&nbsp;    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));</b>
+<b class="nc">&nbsp;    optionsPanel.setBorder(BorderFactory.createTitledBorder(&quot;Analysis Options&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton showGraphButton = new JButton(&quot;Show Graph&quot;);</b>
+<b class="nc">&nbsp;    showGraphButton.addActionListener(e -&gt; showGraphVisualization());</b>
+&nbsp;
+&nbsp;    // Bridge Words panel
+<b class="nc">&nbsp;    JPanel bridgeWordsPanel = new JPanel(new GridLayout(3, 1, 5, 5));</b>
+<b class="nc">&nbsp;    bridgeWordsPanel.setBorder(BorderFactory.createTitledBorder(&quot;Bridge Words&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel word1Panel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    word1Panel.add(new JLabel(&quot;Word 1:&quot;), BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    word1Field = new JTextField(10);</b>
+<b class="nc">&nbsp;    word1Panel.add(word1Field, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel word2Panel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    word2Panel.add(new JLabel(&quot;Word 2:&quot;), BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    word2Field = new JTextField(10);</b>
+<b class="nc">&nbsp;    word2Panel.add(word2Field, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton queryBridgeButton = new JButton(&quot;Query Bridge Words&quot;);</b>
+<b class="nc">&nbsp;    queryBridgeButton.addActionListener(e -&gt; queryBridgeWords());</b>
+&nbsp;
+<b class="nc">&nbsp;    bridgeWordsPanel.add(word1Panel);</b>
+<b class="nc">&nbsp;    bridgeWordsPanel.add(word2Panel);</b>
+<b class="nc">&nbsp;    bridgeWordsPanel.add(queryBridgeButton);</b>
+&nbsp;
+&nbsp;    // Generate Text panel
+<b class="nc">&nbsp;    JPanel generateTextPanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    generateTextPanel.setBorder(BorderFactory.createTitledBorder(&quot;Generate Text&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    inputTextField = new JTextField();</b>
+<b class="nc">&nbsp;    JButton generateButton = new JButton(&quot;Generate with Bridge Words&quot;);</b>
+<b class="nc">&nbsp;    generateButton.addActionListener(e -&gt; generateNewText());</b>
+&nbsp;
+<b class="nc">&nbsp;    generateTextPanel.add(inputTextField, BorderLayout.CENTER);</b>
+<b class="nc">&nbsp;    generateTextPanel.add(generateButton, BorderLayout.SOUTH);</b>
+&nbsp;
+&nbsp;    // Shortest Path panel
+<b class="nc">&nbsp;    JPanel pathPanel = new JPanel(new GridLayout(3, 1, 5, 5));</b>
+<b class="nc">&nbsp;    pathPanel.setBorder(BorderFactory.createTitledBorder(&quot;Shortest Path&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel sourcePanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    sourcePanel.add(new JLabel(&quot;Source Word:&quot;), BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    pathSourceField = new JTextField(10);</b>
+<b class="nc">&nbsp;    sourcePanel.add(pathSourceField, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel targetPanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    targetPanel.add(new JLabel(&quot;Target Word:&quot;), BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    pathTargetField = new JTextField(10);</b>
+<b class="nc">&nbsp;    targetPanel.add(pathTargetField, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton findPathButton = new JButton(&quot;Find Shortest Path&quot;);</b>
+<b class="nc">&nbsp;    findPathButton.addActionListener(e -&gt; findShortestPath());</b>
+&nbsp;
+<b class="nc">&nbsp;    pathPanel.add(sourcePanel);</b>
+<b class="nc">&nbsp;    pathPanel.add(targetPanel);</b>
+<b class="nc">&nbsp;    pathPanel.add(findPathButton);</b>
+&nbsp;
+&nbsp;    // PageRank panel
+<b class="nc">&nbsp;    JPanel pageRankPanel = new JPanel(new GridLayout(2, 1, 5, 5));</b>
+<b class="nc">&nbsp;    pageRankPanel.setBorder(BorderFactory.createTitledBorder(&quot;PageRank&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel pageRankInputPanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    pageRankInputPanel.add(new JLabel(&quot;Word (optional):&quot;), BorderLayout.WEST);</b>
+<b class="nc">&nbsp;    JTextField pageRankField = new JTextField(10);</b>
+<b class="nc">&nbsp;    pageRankInputPanel.add(pageRankField, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton pageRankButton = new JButton(&quot;Calculate PageRank&quot;);</b>
+<b class="nc">&nbsp;    pageRankButton.addActionListener(e -&gt; {</b>
+<b class="nc">&nbsp;      String word = pageRankField.getText().trim();</b>
+<b class="nc">&nbsp;      calculatePageRank(word);</b>
+&nbsp;    });
+&nbsp;
+<b class="nc">&nbsp;    pageRankPanel.add(pageRankInputPanel);</b>
+<b class="nc">&nbsp;    pageRankPanel.add(pageRankButton);</b>
+&nbsp;
+&nbsp;    // Random Walk panel
+<b class="nc">&nbsp;    JPanel randomWalkPanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    randomWalkPanel.setBorder(BorderFactory.createTitledBorder(&quot;Random Walk&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;    JButton randomWalkButton = new JButton(&quot;Perform Random Walk&quot;);</b>
+<b class="nc">&nbsp;    randomWalkButton.addActionListener(e -&gt; performRandomWalk());</b>
+&nbsp;
+<b class="nc">&nbsp;    randomWalkPanel.add(randomWalkButton, BorderLayout.CENTER);</b>
+&nbsp;
+&nbsp;    // Add components to options panel
+<b class="nc">&nbsp;    optionsPanel.add(showGraphButton);</b>
+<b class="nc">&nbsp;    optionsPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    optionsPanel.add(bridgeWordsPanel);</b>
+<b class="nc">&nbsp;    optionsPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    optionsPanel.add(generateTextPanel);</b>
+<b class="nc">&nbsp;    optionsPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    optionsPanel.add(pathPanel);</b>
+<b class="nc">&nbsp;    optionsPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    optionsPanel.add(pageRankPanel);</b>
+<b class="nc">&nbsp;    optionsPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    optionsPanel.add(randomWalkPanel);</b>
+&nbsp;
+&nbsp;    // Add panels to control panel
+<b class="nc">&nbsp;    controlPanel.add(filePanel);</b>
+<b class="nc">&nbsp;    controlPanel.add(Box.createRigidArea(new Dimension(0, 10)));</b>
+<b class="nc">&nbsp;    controlPanel.add(optionsPanel);</b>
+&nbsp;
+<b class="nc">&nbsp;    return controlPanel;</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private JPanel createOutputPanel() {
+<b class="nc">&nbsp;    JPanel outputPanel = new JPanel(new BorderLayout(5, 5));</b>
+<b class="nc">&nbsp;    outputPanel.setBorder(BorderFactory.createTitledBorder(&quot;Output&quot;));</b>
+&nbsp;
+&nbsp;    // Text output tab
+<b class="nc">&nbsp;    outputArea = new JTextArea();</b>
+<b class="nc">&nbsp;    outputArea.setEditable(false);</b>
+<b class="nc">&nbsp;    outputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));</b>
+<b class="nc">&nbsp;    JScrollPane scrollPane = new JScrollPane(outputArea);</b>
+&nbsp;
+&nbsp;    // Graph visualization tab
+<b class="nc">&nbsp;    graphPanel = new JPanel(new BorderLayout());</b>
+&nbsp;
+<b class="nc">&nbsp;    if (svgCanvas != null) {</b>
+&nbsp;      // Add scroll support to SVG canvas for large graphs
+<b class="nc">&nbsp;      JScrollPane svgScrollPane = new JScrollPane(svgCanvas);</b>
+<b class="nc">&nbsp;      svgScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);</b>
+<b class="nc">&nbsp;      svgScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);</b>
+&nbsp;
+<b class="nc">&nbsp;      graphPanel.add(svgScrollPane, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;      JButton zoomInButton = new JButton(&quot;+&quot;);</b>
+<b class="nc">&nbsp;      zoomInButton.setToolTipText(&quot;Zoom In&quot;);</b>
+<b class="nc">&nbsp;      zoomInButton.addActionListener(e -&gt; zoomIn());</b>
+&nbsp;
+<b class="nc">&nbsp;      JButton zoomOutButton = new JButton(&quot;-&quot;);</b>
+<b class="nc">&nbsp;      zoomOutButton.setToolTipText(&quot;Zoom Out&quot;);</b>
+<b class="nc">&nbsp;      zoomOutButton.addActionListener(e -&gt; zoomOut());</b>
+&nbsp;
+<b class="nc">&nbsp;      JButton resetZoomButton = new JButton(&quot;1:1&quot;);</b>
+<b class="nc">&nbsp;      resetZoomButton.setToolTipText(&quot;Reset Zoom&quot;);</b>
+<b class="nc">&nbsp;      resetZoomButton.addActionListener(e -&gt; resetZoom());</b>
+&nbsp;
+<b class="nc">&nbsp;      saveGraphButton = new JButton(&quot;Save Graph&quot;);</b>
+<b class="nc">&nbsp;      saveGraphButton.setToolTipText(&quot;Save the current graph visualization&quot;);</b>
+<b class="nc">&nbsp;      saveGraphButton.setEnabled(false);</b>
+<b class="nc">&nbsp;      saveGraphButton.addActionListener(e -&gt; saveGraph());</b>
+&nbsp;      // Add buttons for zoom control and saving
+<b class="nc">&nbsp;      JPanel graphControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));</b>
+<b class="nc">&nbsp;      graphControlPanel.add(zoomInButton);</b>
+<b class="nc">&nbsp;      graphControlPanel.add(zoomOutButton);</b>
+<b class="nc">&nbsp;      graphControlPanel.add(resetZoomButton);</b>
+<b class="nc">&nbsp;      graphControlPanel.add(saveGraphButton);</b>
+&nbsp;
+<b class="nc">&nbsp;      graphPanel.add(graphControlPanel, BorderLayout.SOUTH);</b>
+&nbsp;    } else {
+&nbsp;      // If Batik is not available, show a message
+<b class="nc">&nbsp;      graphPanel.add(</b>
+&nbsp;          new JLabel(&quot;SVG visualization requires the Apache Batik library.&quot;, JLabel.CENTER),
+&nbsp;          BorderLayout.CENTER);
+&nbsp;    }
+&nbsp;    // Create tabbed pane
+<b class="nc">&nbsp;    JTabbedPane tabbedPane = new JTabbedPane();</b>
+<b class="nc">&nbsp;    tabbedPane.addTab(&quot;Text Output&quot;, scrollPane);</b>
+<b class="nc">&nbsp;    tabbedPane.addTab(&quot;Graph Visualization&quot;, graphPanel);</b>
+&nbsp;
+<b class="nc">&nbsp;    outputPanel.add(tabbedPane, BorderLayout.CENTER);</b>
+&nbsp;
+<b class="nc">&nbsp;    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));</b>
+<b class="nc">&nbsp;    JButton clearButton = new JButton(&quot;Clear Output&quot;);</b>
+<b class="nc">&nbsp;    clearButton.addActionListener(e -&gt; outputArea.setText(&quot;&quot;));</b>
+<b class="nc">&nbsp;    buttonPanel.add(clearButton);</b>
+&nbsp;
+<b class="nc">&nbsp;    outputPanel.add(buttonPanel, BorderLayout.SOUTH);</b>
+&nbsp;
+<b class="nc">&nbsp;    return outputPanel;</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private void openTextFile() {
+<b class="nc">&nbsp;    int returnVal = fileChooser.showOpenDialog(this);</b>
+&nbsp;
+<b class="nc">&nbsp;    if (returnVal == JFileChooser.APPROVE_OPTION) {</b>
+<b class="nc">&nbsp;      File file = fileChooser.getSelectedFile();</b>
+<b class="nc">&nbsp;      currentFilePath = file.getAbsolutePath();</b>
+&nbsp;
+&nbsp;      try {
+<b class="nc">&nbsp;        graph = TextGraphAnalyzer.createGraphFromFile(currentFilePath);</b>
+<b class="nc">&nbsp;        outputArea.setText(&quot;Graph created successfully from file: &quot; + file.getName() + &quot;\n&quot;);</b>
+<b class="nc">&nbsp;        outputArea.append(&quot;Total words (nodes): &quot; + graph.size() + &quot;\n&quot;);</b>
+&nbsp;
+&nbsp;        // Generate the graph visualization immediately
+<b class="nc">&nbsp;        showGraphVisualization();</b>
+&nbsp;
+<b class="nc">&nbsp;        JOptionPane.showMessageDialog(this,</b>
+&nbsp;            &quot;Text file loaded successfully!\n&quot;
+<b class="nc">&nbsp;                + &quot;Words in graph: &quot; + graph.size(),</b>
+&nbsp;            &quot;File Loaded&quot;,
+&nbsp;            JOptionPane.INFORMATION_MESSAGE);
+&nbsp;
+&nbsp;      } catch (IOException e) {
+<b class="nc">&nbsp;        outputArea.setText(&quot;Error reading file: &quot; + e.getMessage() + &quot;\n&quot;);</b>
+<b class="nc">&nbsp;        JOptionPane.showMessageDialog(this,</b>
+<b class="nc">&nbsp;            &quot;Error loading file: &quot; + e.getMessage(),</b>
+&nbsp;            &quot;Error&quot;,
+&nbsp;            JOptionPane.ERROR_MESSAGE);
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void showGraph() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    outputArea.setText(&quot;===== Directed Graph =====\n&quot;);</b>
+<b class="nc">&nbsp;    outputArea.append(&quot;Total words (nodes): &quot; + graph.size() + &quot;\n\n&quot;);</b>
+&nbsp;
+&nbsp;    // Sort words alphabetically for better readability
+<b class="nc">&nbsp;    java.util.List&lt;String&gt; sortedWords = new ArrayList&lt;&gt;(graph.getAllWords());</b>
+<b class="nc">&nbsp;    Collections.sort(sortedWords);</b>
+&nbsp;
+<b class="nc">&nbsp;    for (String word : sortedWords) {</b>
+<b class="nc">&nbsp;      Map&lt;String, Integer&gt; neighbors = graph.getNeighbors(word);</b>
+<b class="nc">&nbsp;      if (!neighbors.isEmpty()) {</b>
+<b class="nc">&nbsp;        outputArea.append(word + &quot; -&gt; &quot; + formatNeighbors(neighbors) + &quot;\n&quot;);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void showGraphVisualization() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;    // 在这里调用showGraph()方法来显示文本信息
+<b class="nc">&nbsp;    showGraph();</b>
+&nbsp;
+&nbsp;    try {
+&nbsp;      // Create a temporary SVG file
+<b class="nc">&nbsp;      currentSvgFile = File.createTempFile(&quot;graph_&quot;, &quot;.svg&quot;);</b>
+&nbsp;
+&nbsp;      // 添加调试信息
+<b class="nc">&nbsp;      outputArea.append(&quot;Attempting to generate graph visualization...\n&quot;);</b>
+<b class="nc">&nbsp;      outputArea.append(&quot;Temporary SVG file: &quot; + currentSvgFile.getAbsolutePath() + &quot;\n&quot;);</b>
+&nbsp;
+&nbsp;      // 检查Graphviz是否安装并显示信息
+<b class="nc">&nbsp;      if (!TextGraphAnalyzer.isGraphvizInstalled()) {</b>
+<b class="nc">&nbsp;        outputArea.append(&quot;WARNING: Graphviz not found in system path!\n&quot;);</b>
+<b class="nc">&nbsp;        JOptionPane.showMessageDialog(this,</b>
+&nbsp;            &quot;Graphviz is not installed or not found in system path.\n&quot;
+&nbsp;                + &quot;Please install Graphviz and ensure &#39;dot&#39; command is available.\n\n&quot;
+&nbsp;                + &quot;Download: https://graphviz.org/download/&quot;,
+&nbsp;            &quot;Graphviz Not Found&quot;,
+&nbsp;            JOptionPane.WARNING_MESSAGE);
+&nbsp;        return;
+&nbsp;      }
+&nbsp;
+&nbsp;      // 尝试使用简化版本的图形生成方法
+<b class="nc">&nbsp;      boolean success = generateSimpleGraph(currentSvgFile.getAbsolutePath());</b>
+&nbsp;
+<b class="nc">&nbsp;      if (success &amp;&amp; svgCanvas != null) {</b>
+&nbsp;        // Load the SVG into the canvas
+<b class="nc">&nbsp;        svgCanvas.setURI(currentSvgFile.toURI().toString());</b>
+<b class="nc">&nbsp;        saveGraphButton.setEnabled(true);</b>
+&nbsp;
+&nbsp;        // Reset view
+<b class="nc">&nbsp;        resetZoom();</b>
+&nbsp;
+&nbsp;        // Switch to the Graph Visualization tab
+<b class="nc">&nbsp;        for (int i = 0; i &lt; ((JTabbedPane) graphPanel.getParent()).getTabCount(); i++) {</b>
+<b class="nc">&nbsp;          if (((JTabbedPane) graphPanel.getParent()).getTitleAt(i).equals(&quot;Graph Visualization&quot;)) {</b>
+<b class="nc">&nbsp;            ((JTabbedPane) graphPanel.getParent()).setSelectedIndex(i);</b>
+&nbsp;            break;
+&nbsp;          }
+&nbsp;        }
+&nbsp;      } else {
+<b class="nc">&nbsp;        outputArea.append(&quot;Failed to generate graph visualization.\n&quot;);</b>
+<b class="nc">&nbsp;        outputArea.append(&quot;Please check if Graphviz is properly installed.\n&quot;);</b>
+&nbsp;      }
+&nbsp;    } catch (IOException e) {
+<b class="nc">&nbsp;      outputArea.append(&quot;Error: &quot; + e.getMessage() + &quot;\n&quot;);</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+<b class="nc">&nbsp;          &quot;Error creating graph visualization: &quot; + e.getMessage(),</b>
+&nbsp;          &quot;Visualization Error&quot;,
+&nbsp;          JOptionPane.ERROR_MESSAGE);
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  // 添加一个简化版本的图形生成方法
+&nbsp;  private boolean generateSimpleGraph(String outputFile) {
+&nbsp;    try {
+&nbsp;      // 创建一个基本的DOT格式图表定义
+<b class="nc">&nbsp;      StringBuilder dotBuilder = new StringBuilder();</b>
+<b class="nc">&nbsp;      dotBuilder.append(&quot;digraph TextGraph {\n&quot;);</b>
+<b class="nc">&nbsp;      dotBuilder.append(&quot;  node [shape=box, style=filled, fillcolor=lightblue];\n&quot;);</b>
+<b class="nc">&nbsp;      dotBuilder.append(&quot;  edge [color=gray];\n&quot;);</b>
+&nbsp;
+&nbsp;      // 添加所有单词及其连接
+<b class="nc">&nbsp;      for (String word : graph.getAllWords()) {</b>
+&nbsp;        // 添加节点
+<b class="nc">&nbsp;        dotBuilder.append(&quot;  \&quot;&quot;).append(word).append(&quot;\&quot;;\n&quot;);</b>
+&nbsp;
+&nbsp;        // 添加边
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; neighbors = graph.getNeighbors(word);</b>
+<b class="nc">&nbsp;        for (Map.Entry&lt;String, Integer&gt; entry : neighbors.entrySet()) {</b>
+<b class="nc">&nbsp;          String neighbor = entry.getKey();</b>
+<b class="nc">&nbsp;          int weight = entry.getValue();</b>
+<b class="nc">&nbsp;          dotBuilder.append(&quot;  \&quot;&quot;).append(word).append(&quot;\&quot; -&gt; \&quot;&quot;)</b>
+<b class="nc">&nbsp;              .append(neighbor).append(&quot;\&quot; [label=\&quot;&quot;).append(weight).append(&quot;\&quot;];\n&quot;);</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+<b class="nc">&nbsp;      dotBuilder.append(&quot;}\n&quot;);</b>
+&nbsp;
+&nbsp;      // 将DOT内容写入临时文件
+<b class="nc">&nbsp;      File dotFile = File.createTempFile(&quot;graph_&quot;, &quot;.dot&quot;);</b>
+<b class="nc">&nbsp;      Files.writeString(dotFile.toPath(), dotBuilder.toString());</b>
+&nbsp;
+&nbsp;      // 使用ProcessBuilder来执行dot命令
+<b class="nc">&nbsp;      ProcessBuilder pb = new ProcessBuilder(</b>
+<b class="nc">&nbsp;          &quot;dot&quot;, &quot;-Tsvg&quot;, &quot;-o&quot;, outputFile, dotFile.getAbsolutePath());</b>
+<b class="nc">&nbsp;      Process process = pb.start();</b>
+&nbsp;
+&nbsp;      // 等待进程完成
+<b class="nc">&nbsp;      int exitCode = process.waitFor();</b>
+&nbsp;
+&nbsp;      // 删除临时DOT文件
+<b class="nc">&nbsp;      boolean deleted = dotFile.delete();</b>
+<b class="nc">&nbsp;      if (!deleted &amp;&amp; dotFile.exists()) {</b>
+<b class="nc">&nbsp;        System.err.println(&quot;警告：无法删除临时文件 &quot; + dotFile.getAbsolutePath());</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // 检查输出文件是否存在且非空
+<b class="nc">&nbsp;      File outFile = new File(outputFile);</b>
+<b class="nc">&nbsp;      return exitCode == 0 &amp;&amp; outFile.exists() &amp;&amp; outFile.length() &gt; 0;</b>
+&nbsp;
+&nbsp;    } catch (IOException | InterruptedException e) {
+<b class="nc">&nbsp;      outputArea.append(&quot;Error generating graph: &quot; + e.getMessage() + &quot;\n&quot;);</b>
+<b class="nc">&nbsp;      return false;</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void zoomIn() {
+<b class="nc">&nbsp;    if (svgCanvas != null) {</b>
+<b class="nc">&nbsp;      AffineTransform at = svgCanvas.getRenderingTransform();</b>
+<b class="nc">&nbsp;      at.scale(1.2, 1.2);</b>
+<b class="nc">&nbsp;      svgCanvas.setRenderingTransform(at);</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void zoomOut() {
+<b class="nc">&nbsp;    if (svgCanvas != null) {</b>
+<b class="nc">&nbsp;      AffineTransform at = svgCanvas.getRenderingTransform();</b>
+<b class="nc">&nbsp;      at.scale(0.8, 0.8);</b>
+<b class="nc">&nbsp;      svgCanvas.setRenderingTransform(at);</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void resetZoom() {
+<b class="nc">&nbsp;    if (svgCanvas != null) {</b>
+<b class="nc">&nbsp;      svgCanvas.setRenderingTransform(new AffineTransform());</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private String formatNeighbors(Map&lt;String, Integer&gt; neighbors) {
+<b class="nc">&nbsp;    return neighbors.entrySet().stream()</b>
+<b class="nc">&nbsp;        .map(e -&gt; e.getKey() + &quot; (weight: &quot; + e.getValue() + &quot;)&quot;)</b>
+<b class="nc">&nbsp;        .collect(Collectors.joining(&quot;, &quot;));</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private void queryBridgeWords() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String word1 = word1Field.getText().trim();</b>
+<b class="nc">&nbsp;    String word2 = word2Field.getText().trim();</b>
+&nbsp;
+<b class="nc">&nbsp;    if (word1.isEmpty() || word2.isEmpty()) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please enter both words.&quot;,
+&nbsp;          &quot;Input Error&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String result = TextGraphAnalyzer.queryBridgeWords(graph, word1, word2);</b>
+<b class="nc">&nbsp;    outputArea.setText(result + &quot;\n&quot;);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private void generateNewText() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String inputText = inputTextField.getText().trim();</b>
+&nbsp;
+<b class="nc">&nbsp;    if (inputText.isEmpty()) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please enter text to process.&quot;,
+&nbsp;          &quot;Input Error&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String newText = TextGraphAnalyzer.generateNewText(graph, inputText);</b>
+<b class="nc">&nbsp;    outputArea.setText(&quot;Original text:\n&quot; + inputText + &quot;\n\n&quot;);</b>
+<b class="nc">&nbsp;    outputArea.append(&quot;Text with bridge words:\n&quot; + newText + &quot;\n&quot;);</b>
+&nbsp;  }
+&nbsp;
+&nbsp;  private void findShortestPath() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String sourceWord = pathSourceField.getText().trim();</b>
+<b class="nc">&nbsp;    String targetWord = pathTargetField.getText().trim();</b>
+&nbsp;
+<b class="nc">&nbsp;    if (sourceWord.isEmpty()) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please enter at least the source word.&quot;,
+&nbsp;          &quot;Input Error&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    if (targetWord.isEmpty()) {</b>
+&nbsp;      // Calculate shortest paths from sourceWord to all other words
+<b class="nc">&nbsp;      outputArea.setText(&quot;Shortest paths from &quot; + sourceWord + &quot; to all other words:\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;      List&lt;String&gt; destinations = new ArrayList&lt;&gt;(graph.getAllWords());</b>
+<b class="nc">&nbsp;      Collections.sort(destinations);</b>
+&nbsp;
+<b class="nc">&nbsp;      for (String target : destinations) {</b>
+<b class="nc">&nbsp;        if (!target.equals(sourceWord)) {</b>
+<b class="nc">&nbsp;          outputArea.append(TextGraphAnalyzer.calcShortestPath(graph, sourceWord, target) + &quot;\n\n&quot;);</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;    } else {
+<b class="nc">&nbsp;      String result = TextGraphAnalyzer.calcShortestPath(graph, sourceWord, targetWord);</b>
+<b class="nc">&nbsp;      outputArea.setText(result + &quot;\n&quot;);</b>
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void calculatePageRank(String word) {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    if (word.isEmpty()) {</b>
+&nbsp;      // Calculate PageRank for all words and sort by value
+<b class="nc">&nbsp;      Map&lt;String, Double&gt; allRanks = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;      outputArea.setText(&quot;Calculating PageRank values for all words...\n\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;      for (String w : graph.getAllWords()) {</b>
+<b class="nc">&nbsp;        allRanks.put(w, TextGraphAnalyzer.calcPageRank(graph, w));</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      // Sort by PageRank value (descending)
+<b class="nc">&nbsp;      List&lt;Map.Entry&lt;String, Double&gt;&gt; sortedRanks = new ArrayList&lt;&gt;(allRanks.entrySet());</b>
+<b class="nc">&nbsp;      sortedRanks.sort(Map.Entry.&lt;String, Double&gt;comparingByValue().reversed());</b>
+&nbsp;
+<b class="nc">&nbsp;      outputArea.append(&quot;PageRank values for all words (sorted):\n&quot;);</b>
+<b class="nc">&nbsp;      for (Map.Entry&lt;String, Double&gt; entry : sortedRanks) {</b>
+<b class="nc">&nbsp;        outputArea.append(String.format(&quot;%s: %.4f%n&quot;, entry.getKey(), entry.getValue()));</b>
+&nbsp;      }
+&nbsp;    } else {
+<b class="nc">&nbsp;      Double pageRank = TextGraphAnalyzer.calcPageRank(graph, word);</b>
+<b class="nc">&nbsp;      if (pageRank &gt;= 0) {</b>
+<b class="nc">&nbsp;        outputArea.setText(String.format(&quot;PageRank value for &#39;%s&#39;: %.4f%n&quot;, word, pageRank));</b>
+&nbsp;      } else {
+<b class="nc">&nbsp;        outputArea.setText(&quot;Word &#39;&quot; + word + &quot;&#39; not found in the graph.\n&quot;);</b>
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void performRandomWalk() {
+<b class="nc">&nbsp;    if (graph == null) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;Please load a text file first.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    String walkResult = TextGraphAnalyzer.randomWalk(graph);</b>
+<b class="nc">&nbsp;    outputArea.setText(&quot;Random Walk:\n\n&quot;);</b>
+<b class="nc">&nbsp;    outputArea.append(walkResult + &quot;\n&quot;);</b>
+&nbsp;
+&nbsp;    // Offer to save
+<b class="nc">&nbsp;    int choice = JOptionPane.showConfirmDialog(this,</b>
+&nbsp;        &quot;Do you want to save this random walk to a file?&quot;,
+&nbsp;        &quot;Save Random Walk&quot;,
+&nbsp;        JOptionPane.YES_NO_OPTION);
+&nbsp;
+<b class="nc">&nbsp;    if (choice == JOptionPane.YES_OPTION) {</b>
+<b class="nc">&nbsp;      JFileChooser saveChooser = new JFileChooser();</b>
+<b class="nc">&nbsp;      saveChooser.setDialogTitle(&quot;Save Random Walk&quot;);</b>
+<b class="nc">&nbsp;      saveChooser.setSelectedFile(new File(&quot;random_walk_&quot; + System.currentTimeMillis() + &quot;.txt&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;      int saveChoice = saveChooser.showSaveDialog(this);</b>
+<b class="nc">&nbsp;      if (saveChoice == JFileChooser.APPROVE_OPTION) {</b>
+&nbsp;        try {
+<b class="nc">&nbsp;          Files.writeString(saveChooser.getSelectedFile().toPath(), walkResult);</b>
+<b class="nc">&nbsp;          JOptionPane.showMessageDialog(this,</b>
+&nbsp;              &quot;Random walk saved successfully!&quot;,
+&nbsp;              &quot;File Saved&quot;,
+&nbsp;              JOptionPane.INFORMATION_MESSAGE);
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;          JOptionPane.showMessageDialog(this,</b>
+<b class="nc">&nbsp;              &quot;Error saving file: &quot; + e.getMessage(),</b>
+&nbsp;              &quot;Save Error&quot;,
+&nbsp;              JOptionPane.ERROR_MESSAGE);
+&nbsp;        }
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;
+&nbsp;  private void saveGraph() {
+<b class="nc">&nbsp;    if (graph == null || currentSvgFile == null || !currentSvgFile.exists()) {</b>
+<b class="nc">&nbsp;      JOptionPane.showMessageDialog(this,</b>
+&nbsp;          &quot;No graph visualization is currently available.&quot;,
+&nbsp;          &quot;No Graph Available&quot;,
+&nbsp;          JOptionPane.WARNING_MESSAGE);
+&nbsp;      return;
+&nbsp;    }
+&nbsp;
+&nbsp;    // Create format options
+<b class="nc">&nbsp;    String[] formats = {&quot;SVG (Scalable Vector Graphics)&quot;, &quot;PNG (Portable Network Graphics)&quot;,</b>
+&nbsp;        &quot;PDF (Portable Document Format)&quot;, &quot;DOT (Graphviz Source)&quot;};
+<b class="nc">&nbsp;    String format = (String) JOptionPane.showInputDialog(</b>
+&nbsp;        this,
+&nbsp;        &quot;Select output format:&quot;,
+&nbsp;        &quot;Save Graph&quot;,
+&nbsp;        JOptionPane.QUESTION_MESSAGE,
+&nbsp;        null,
+&nbsp;        formats,
+&nbsp;        formats[0]);
+&nbsp;
+<b class="nc">&nbsp;    if (format == null) {</b>
+&nbsp;      return; // User canceled
+&nbsp;    }
+&nbsp;
+&nbsp;    // Determine file extension
+&nbsp;    String extension;
+<b class="nc">&nbsp;    if (format.startsWith(&quot;SVG&quot;)) {</b>
+<b class="nc">&nbsp;      extension = &quot;svg&quot;;</b>
+<b class="nc">&nbsp;    } else if (format.startsWith(&quot;PNG&quot;)) {</b>
+<b class="nc">&nbsp;      extension = &quot;png&quot;;</b>
+<b class="nc">&nbsp;    } else if (format.startsWith(&quot;PDF&quot;)) {</b>
+<b class="nc">&nbsp;      extension = &quot;pdf&quot;;</b>
+&nbsp;    } else {
+<b class="nc">&nbsp;      extension = &quot;dot&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Configure file chooser
+<b class="nc">&nbsp;    JFileChooser saveChooser = new JFileChooser();</b>
+<b class="nc">&nbsp;    saveChooser.setDialogTitle(&quot;Save Graph&quot;);</b>
+<b class="nc">&nbsp;    saveChooser.setSelectedFile(new File(&quot;graph_&quot; + System.currentTimeMillis() + &quot;.&quot; + extension));</b>
+&nbsp;
+&nbsp;    // Show save dialog
+<b class="nc">&nbsp;    int saveChoice = saveChooser.showSaveDialog(this);</b>
+<b class="nc">&nbsp;    if (saveChoice == JFileChooser.APPROVE_OPTION) {</b>
+<b class="nc">&nbsp;      String outputPath = saveChooser.getSelectedFile().getAbsolutePath();</b>
+&nbsp;
+&nbsp;      // Ensure file has correct extension
+<b class="nc">&nbsp;      if (!outputPath.toLowerCase().endsWith(&quot;.&quot; + extension)) {</b>
+<b class="nc">&nbsp;        outputPath += &quot;.&quot; + extension;</b>
+&nbsp;      }
+&nbsp;
+&nbsp;      boolean success;
+&nbsp;
+&nbsp;      // If SVG is selected and we already have an SVG file, just copy it
+<b class="nc">&nbsp;      if (extension.equals(&quot;svg&quot;) &amp;&amp; currentSvgFile != null) {</b>
+&nbsp;        try {
+<b class="nc">&nbsp;          Files.copy(currentSvgFile.toPath(), new File(outputPath).toPath(),</b>
+&nbsp;              StandardCopyOption.REPLACE_EXISTING);
+<b class="nc">&nbsp;          success = true;</b>
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;          success = false;</b>
+<b class="nc">&nbsp;          JOptionPane.showMessageDialog(this,</b>
+<b class="nc">&nbsp;              &quot;Error saving SVG file: &quot; + e.getMessage(),</b>
+&nbsp;              &quot;Save Error&quot;,
+&nbsp;              JOptionPane.ERROR_MESSAGE);
+&nbsp;        }
+&nbsp;      } else {
+&nbsp;        // For other formats, use the graph to generate the file
+<b class="nc">&nbsp;        if (!extension.equals(&quot;dot&quot;) &amp;&amp; !TextGraphAnalyzer.isGraphvizInstalled()) {</b>
+<b class="nc">&nbsp;          JOptionPane.showMessageDialog(this,</b>
+&nbsp;              &quot;Graphviz is not installed. Saving as DOT format instead.&quot;,
+&nbsp;              &quot;Graphviz Not Found&quot;,
+&nbsp;              JOptionPane.WARNING_MESSAGE);
+<b class="nc">&nbsp;          outputPath = outputPath.replaceAll(&quot;\\.[^.]+$&quot;, &quot;.dot&quot;);</b>
+<b class="nc">&nbsp;          success = TextGraphAnalyzer.saveGraphToFile(graph, outputPath, &quot;dot&quot;);</b>
+&nbsp;        } else {
+&nbsp;          // Use enhanced version for better quality
+<b class="nc">&nbsp;          success = TextGraphAnalyzer.saveEnhancedGraphToFile(graph, outputPath, extension);</b>
+&nbsp;        }
+&nbsp;      }
+&nbsp;
+<b class="nc">&nbsp;      if (success) {</b>
+<b class="nc">&nbsp;        JOptionPane.showMessageDialog(this,</b>
+&nbsp;            &quot;Graph saved successfully to:\n&quot; + outputPath,
+&nbsp;            &quot;File Saved&quot;,
+&nbsp;            JOptionPane.INFORMATION_MESSAGE);
+&nbsp;      } else {
+<b class="nc">&nbsp;        JOptionPane.showMessageDialog(this,</b>
+&nbsp;            &quot;Failed to save graph.&quot;,
+&nbsp;            &quot;Save Error&quot;,
+&nbsp;            JOptionPane.ERROR_MESSAGE);
+&nbsp;      }
+&nbsp;    }
+&nbsp;  }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-05-27 13:31</div>
+</div>
+</body>
+</html>
